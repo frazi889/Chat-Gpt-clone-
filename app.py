@@ -317,10 +317,10 @@ def get_webhook_info():
     return tg_api("getWebhookInfo", {})
 
 
-@app.post("/webhook/{secret}")
-async def webhook(secret: str, request: Request):
-    if secret != WEBHOOK_SECRET:
-        return {"ok": False}
+@app.get("/set_webhook")
+def set_webhook():
+    webhook_url = f"{BASE_URL}/webhook/{WEBHOOK_SECRET}"
+    return tg_api("setWebhook", {"url": webhook_url})
 
     data = await request.json()
     message = data.get("message")
