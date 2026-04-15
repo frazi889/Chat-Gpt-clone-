@@ -40,20 +40,22 @@ def ai_reply(user_text):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a friendly Myanmar chatbot. Speak naturally in Burmese and English mix. Be fun and conversational."
+                    "content": "You are a friendly Myanmar chatbot. Speak naturally in Burmese and English mix. Be fun, casual, and conversational."
                 },
                 {
                     "role": "user",
                     "content": user_text
                 }
-            ]
+            ],
+            max_tokens=150
         )
         return res.choices[0].message.content
-    except Exception as e:
-        print("AI ERROR:", str(e))
-        return "ဟာ bro bot brain ခဏ hang သွားတယ် 😵"
 
-@app.get("/")
+    except Exception as e:
+        error_text = str(e)
+        print("OPENAI_ERROR:", error_text)
+        return f"AI error: {error_text}"
+        
 def home():
     return {
         "ok": True,
