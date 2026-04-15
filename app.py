@@ -4,64 +4,80 @@ from fastapi import FastAPI, Request
 
 app = FastAPI()
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-BASE_URL = os.getenv("BASE_URL")
-WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+BASE_URL = os.getenv("BASE_URL", "")
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
 
+def tg_api(method, data):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
+    r = requests.post(url, json=data, timeout=30)
+    return r.json()
 
-def send_message(chat_id, text, reply_id=None):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    data = {"chat_id": chat_id, "text": text}
-    if reply_id:
-        data["reply_to_message_id"] = reply_id
-    requests.post(url, json=data)
+def send_message(chat_id, text, reply_to_message_id=None):
+    data = {
+        "chat_id": chat_id,
+        "text": text
+    }
+    if reply_to_message_id:
+        data["reply_to_message_id"] = reply_to_message_id
+    return tg_api("sendMessage", data)
 
-
-# ✅ Home test
 @app.get("/")
 def home():
-    return {"ok": True}
+    return {
+        "ok": True,
+        "bot_token_set": bool(BOT_TOKEN),
+        "base_url": BASE_URL,
+        "webhook_secret_set": bool(WEBHOOK_SECRET)
+    }
 
-
-# ✅ Set webhook
 @app.get("/set_webhook")
 def set_webhook():
-    url = f"{BASE_URL}/webhook/{WEBHOOK_SECRET}"
-    res = requests.post(
-        f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook",
-        json={"url": url},
-    )
-    return res.json()
+    webhook_url = f"{BASE_URL}/webhook/{WEBHOOK_SECRET}"
+    return tg_api("setWebhook", {"url": webhook_url})
 
+@app.get("/get_webhook_info")
+def get_webhook_info():
+    return tg_api("getWebhookInfo", {})
 
-# ✅ Webhook
+@app.get("/delete_webhook")
+def delete_webhook():
+    return tg_api("deleteWebhook", {})
+
 @app.post("/webhook/{secret}")
 async def webhook(secret: str, request: Request):
+    print("=== WEBHOOK HIT ===")
+
     if secret != WEBHOOK_SECRET:
-        return {"ok": False}
+        print("bad secret")
+        return {"ok": False, "error": "bad secret"}
 
     data = await request.json()
-    message = data.get("message")
+    print("update:", data)
 
+    message = data.get("message")
     if not message:
         return {"ok": True}
 
     chat_id = message["chat"]["id"]
-    msg_id = message["message_id"]
+    message_id = message["message_id"]
     text = message.get("text", "")
 
     if not text:
+        send_message(chat_id, "text ပို့ bro 😆", message_id)
         return {"ok": True}
 
-    # 🔥 reply-only logic
     chat_type = message["chat"]["type"]
 
+    # private chat => always reply
+    if chat_type == "private":
+        send_message(chat_id, f"ok private: {text}", message_id)
+        return {"ok": True}
+
+    # group / supergroup => reply only if user replied to bot
     if chat_type in ["group", "supergroup"]:
         reply = message.get("reply_to_message")
-        if not reply or not reply["from"].get("is_bot"):
-            return {"ok": True}
-
-    # ✅ TEST reply
-    send_message(chat_id, f"rp ok: {text}", msg_id)
+        if reply and reply.get("from", {}).get("is_bot"):
+            send_message(chat_id, f"ok reply: {text}", message_id)
 
     return {"ok": True}
