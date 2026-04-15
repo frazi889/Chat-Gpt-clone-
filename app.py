@@ -5,6 +5,13 @@ from openai import OpenAI
 
 app = FastAPI()
 
+@app.get("/")
+def home():
+    return {
+        "ok": True,
+        "openai_key_set": bool(OPENAI_API_KEY)
+    } 
+    
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 BASE_URL = os.getenv("BASE_URL", "")
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
