@@ -12,17 +12,12 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-@app.get("/")
-def home():
-    return {
-        "ok": True,
-        "openai_key_set": bool(OPENAI_API_KEY)
-    } 
 
 def tg_api(method, data):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
     r = requests.post(url, json=data, timeout=30)
     return r.json()
+
 
 def send_message(chat_id, text, reply_to_message_id=None):
     data = {
@@ -33,6 +28,24 @@ def send_message(chat_id, text, reply_to_message_id=None):
         data["reply_to_message_id"] = reply_to_message_id
     return tg_api("sendMessage", data)
 
+
+def fallback_reply(user_text):
+    text = user_text.lower()
+
+    if "hello" in text or "hi" in text or "ဟယ်လို" in text or "မင်္ဂလာပါ" in text:
+        return "ဟေး bro 😎 နေကောင်းလား"
+
+    if "sad" in text or "ဝမ်းနည်း" in text or "အလွမ်း" in text:
+        return "ဟာ bro 🥺 စိတ်မကောင်းမဖြစ်နဲ့… ငါရှိတယ်"
+
+    if "joke" in text or "ဟာသ" in text or "ရီစရာ" in text:
+        return "😂 မင်းအချစ်ရေးက wifi လိုပဲ… connect ဖြစ်ရင်ပျော်၊ မဖြစ်ရင် sad"
+
+    if "ဘာလုပ်" in text or "what are you doing" in text:
+        return "မင်း message ပို့လာမလားလို့ စောင့်နေတာ bro 😏"
+
+    return "ဟာ bro 😵 AI credits ကုန်နေလို့ smart reply မပေးနိုင်သေးဘူး" 
+
 def ai_reply(user_text):
     try:
         res = client.chat.completions.create(
@@ -40,7 +53,12 @@ def ai_reply(user_text):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a friendly Myanmar chatbot. Speak naturally in Burmese and English mix. Be fun, casual, and conversational."
+                    "content": (
+                        "You are a friendly Myanmar chatbot. "
+                        "Speak naturally in Burmese and English mix. "
+                        "Be fun, casual, emotional, and conversational. "
+                        "Keep replies short like a real chat friend."
+                    )
                 },
                 {
                     "role": "user",
@@ -54,23 +72,33 @@ def ai_reply(user_text):
     except Exception as e:
         error_text = str(e)
         print("OPENAI_ERROR:", error_text)
-        return f"AI error: {error_text}"
-        
+
+        if "insufficient_quota" in error_text or "429" in error_text:
+            return fallback_reply(user_text)
+
+        return "ဟာ bro bot brain ခဏ hang သွားတယ် 😵"
+
+
+@app.get("/")
 def home():
     return {
         "ok": True,
-        "message": "Bot is running",
+        "bot_token_set": bool(BOT_TOKEN),
+        "base_url": BASE_URL,
+        "webhook_secret_set": bool(WEBHOOK_SECRET),
         "openai_key_set": bool(OPENAI_API_KEY)
     }
+
 
 @app.get("/set_webhook")
 def set_webhook():
     webhook_url = f"{BASE_URL}/webhook/{WEBHOOK_SECRET}"
     return tg_api("setWebhook", {"url": webhook_url})
 
+
 @app.get("/get_webhook_info")
 def get_webhook_info():
-    return tg_api("getWebhookInfo", {})
+    return tg_api("getWebhookInfo", {}) 
 
 @app.post("/webhook/{secret}")
 async def webhook(secret: str, request: Request):
