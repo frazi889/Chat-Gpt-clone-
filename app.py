@@ -71,7 +71,8 @@ async def webhook(secret: str, request: Request):
 
     # private chat => always reply
     if chat_type == "private":
-        send_message(chat_id, f"ok private: {text}", message_id)
+       reply = ai_reply(text)
+send_message(chat_id, reply, message_id)
         return {"ok": True}
 
     # group / supergroup => reply only if user replied to bot
