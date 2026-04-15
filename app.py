@@ -12,14 +12,14 @@ WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
 
 def tg_api(method, data):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
-    r = requests.post(url, json=data, timeout=30)
-    return r.json()
+    response = requests.post(url, json=data, timeout=30)
+    return response.json()
 
 
 def send_message(chat_id, text, reply_to_message_id=None):
     data = {
         "chat_id": chat_id,
-        "text": text[:4000]
+        "text": str(text)[:4000]
     }
     if reply_to_message_id:
         data["reply_to_message_id"] = reply_to_message_id
@@ -34,30 +34,154 @@ def contains_any(text, words):
     return any(word in text for word in words)
 
 
-greetings = [
-    "ဟေး bro 😎 နေကောင်းလား",
-    "yo bro 😏 ဘာလုပ်နေလဲ",
-    "မင်္ဂလာပါ bro 😄",
-    "ဟေ့ 😎 finally ပေါ်လာပြီလား",
-    "hi bro 👀 ငါစောင့်နေတာ"
+INTRO_REPLIES = [
+    "ဟေး bro 😎 ငါဒီမှာရှိတယ်",
+    "yo bro 👀 ဘာ mood နဲ့လာတာလဲ",
+    "မင်္ဂလာပါ bro 😄 စကားပြောရအောင်",
+    "finally ပေါ်လာပြီလား bro 😏",
 ]
 
-how_are_you_replies = [
+GREETING_REPLIES = [
+    "ဟေး bro 😎 နေကောင်းလား",
+    "hi bro 👋 ဒီနေ့ဘာ vibe လဲ",
+    "yo bro 😏 ဘာလုပ်နေလဲ",
+    "မင်္ဂလာပါ bro 😄",
+    "ဟယ်လို bro 👀"
+]
+
+HOW_ARE_YOU_REPLIES = [
     "နေကောင်းတယ် bro 😎 မင်းရော",
-    "အေးပြေတယ် bro 😌 မင်းကော",
-    "မဆိုးဘူး bro… မင်း message ပို့လို့ပိုကောင်းသွားတယ် 😏",
+    "အေးပြေတယ် bro 😌 မင်းဘက်ကော",
+    "မဆိုးဘူး bro… မင်း message ပို့လို့ mood ကောင်းသွားတယ် 😏",
     "chill ပဲ bro 😎 မင်းနေကောင်းလား"
 ]
 
-jokes = [
+JOKE_REPLIES = [
     "😂 မင်းအချစ်ရေးက wifi လိုပဲ… connect ဖြစ်ရင်ပျော်၊ မဖြစ်ရင် sad",
     "🤣 မင်း life က charger မရှိတဲ့ phone လိုပဲ… low battery bro",
-    "😆 အချစ်ရေးမအောင်မြင်ရင် tea သောက် bro… tea ကတော့ မပစ်သွားဘူး",
-    "😂 crush က reply မပေးရင် airplane mode ချလိုက် bro… pain လျော့တယ်",
-    "🤣 မင်းအိပ်ချင်တာနဲ့ success ရချင်တာ fight ဖြစ်နေတာ bro"
+    "😆 crush က reply မပေးရင် airplane mode ချလိုက် bro",
+    "😂 မင်းစိတ်ကူးနဲ့ reality က enemy တွေလိုဖြစ်နေတယ် bro",
+    "🤣 အောင်မြင်ချင်တာနဲ့ အိပ်ချင်တာက မင်းထဲမှာ daily fight လုပ်နေတယ်"
+] 
+
+LOVE_REPLIES = [
+    "အူးဟူး 😏 ဘယ်သူ့ကိုလွမ်းနေတာလဲ bro",
+    "bro… crush ရှိရင်တန်းပြော 😆",
+    "ဟာ 🥺 ဒီစကားက heart ထိတယ် bro",
+    "ချစ်ရတာ easy ထင်ရပေမယ့် forget လုပ်ရတာ hard mode bro 😮‍💨",
+    "မင်း tone က romance drama main character လေးလိုပဲ 😏",
+    "love vibe ဝင်နေပြီ bro 👀"
 ]
 
-random_replies = [
+MISS_REPLIES = [
+    "လွမ်းနေတာလား bro 🥺",
+    "အဲ့လို mood တွေကညဘက်ဆိုပိုဆိုးတတ်တယ်နော်",
+    "မတွေ့ရတဲ့လူကိုပိုလွမ်းရတာ life ပဲ bro",
+    "လွမ်းနေတယ်ဆိုရင် song ဖွင့်ပြီး feel ခံလိုက် bro 😔",
+    "မပြောဖြစ်တဲ့စကားတွေရှိနေတာလား bro"
+]
+
+SAD_REPLIES = [
+    "ဟာ bro 🥺 စိတ်မကောင်းမဖြစ်နဲ့… ငါရှိတယ်",
+    "အို bro 😔 ဘာဖြစ်လဲ ပြောပါဦး",
+    "တခါတလေ life က heavy ဖြစ်တတ်တယ် bro",
+    "မင်း pain ကို joke နဲ့ဖုံးနေတာလား bro 🥲",
+    "bro breathe လေးယူ… everything will pass"
+]
+
+FRIEND_REPLIES = [
+    "bro mode on 😎",
+    "ဟုတ်တယ် သူငယ်ချင်း vibe နဲ့ပြော bro",
+    "ငါကတော့ bro side ပဲ 😌",
+    "friend zone မဟုတ်ဘူး bro zone 😆",
+    "ဟေ့ bro chill… ငါရှိတယ်",
+    "မင်းဘက်ကနေ support လုပ်ပေးမယ် bro"
+]
+
+ANGRY_REPLIES = [
+    "ဟာ bro 😤 mood က spicy နော်",
+    "အေးကွာ စိတ်တိုနေရင် slowly ပြော bro",
+    "rage mode ဝင်နေပြီလား bro 😤",
+    "fight mode on လား 😏",
+    "ဒေါသကို tea နဲ့ dilute လုပ်လိုက် bro 😂",
+    "မင်းစိတ်တိုနေတာတောင် style ရှိနေတယ် bro"
+]
+
+ROAST_REPLIES = [
+    "ဟာ bro 😏 မင်းကတော့ reply လုပ်မှအသက်ဝင်လာတဲ့ hero ပဲ",
+    "မင်း confidence က free unlimited package လား bro 😆",
+    "ဟေ့ spicy လေးပြောနေတာလား bro",
+    "မင်း vibe က drama နဲ့ comedy mix ပဲ bro 😂",
+    "မင်းကတော့ walking sarcasm ပဲ 😏",
+    "အဲ့လိုပြောတာတောင် cute side နည်းနည်းပါသေးတယ် bro"
+] 
+
+SWEAR_SOFT_REPLIES = [
+    "ဟာ bro 😅 စကားကြမ်းသွားပြီနော်",
+    "ဆဲလို့ရတယ် bro… but chill လေး 😏",
+    "မင်း mood က rough ဖြစ်နေတာပဲ bro",
+    "အေးပါ bro language က spicy ဖြစ်နေပြီ 😂",
+    "မင်းဆဲတာတောင် rhythm ရှိတယ် bro",
+    "ဟာကွာ fire mode ဝင်နေပြီ 😆"
+]
+
+JEALOUS_REPLIES = [
+    "ဟာ bro jealous ဖြစ်နေတာလား 😏",
+    "မနာလိုနေတာလား bro… honest ဖြစ်နေတာပဲ",
+    "jealous flavor နည်းနည်းပါနေတယ်နော် 😂",
+    "အူးဟူး သဝန်တို mood ဝင်ပြီလား bro",
+    "care လွန်းလို့ jealous ဖြစ်နေတာပဲ bro"
+]
+
+LONELY_REPLIES = [
+    "lonely feel ဖြစ်နေလား bro 🥺",
+    "တစ်ယောက်တည်း feel ဖြစ်တဲ့ညတွေက heavy တယ်နော်",
+    "company လိုတာ normal ပဲ bro",
+    "ငါနဲ့ပြော bro… silent မနေပါနဲ့",
+    "lonely mood ကစိတ်ကိုဆွဲချတတ်တယ် bro"
+]
+
+FLIRTY_REPLIES = [
+    "ဟာ bro 😏 ဒီ tone က flirting နည်းနည်းပါနေတယ်",
+    "အူးဟူး မင်းစကားက smooth နော် 😆",
+    "ဒီလိုပြောရင် heart ထိတယ် bro 😏",
+    "မင်းကတော့ charm ကို casual သုံးတာပဲ",
+    "ဒီ vibe နဲ့ဆို crush ပေါ်နိုင်တယ် bro"
+]
+
+SLEEP_REPLIES = [
+    "အိပ်တော့ bro 😴 body က rest လိုတယ်",
+    "late night overthinking မလုပ်နဲ့ bro",
+    "sleep first bro… tomorrow version က better ဖြစ်မယ်",
+    "ဖုန်းချ bro 😴 မနက်ကျ ပြန်ပြော",
+    "အိပ်ရေးမဝရင် mood တောင် toxic ဖြစ်တတ်တယ် bro"
+]
+
+FOOD_REPLIES = [
+    "ဘာစားထားလဲ bro 🍜",
+    "ဗိုက်ဆာနေရင် first eat bro",
+    "life problems တစ်ဝက်က food နဲ့ solve လို့ရတယ် bro 😆",
+    "မစားရသေးရင် စားလိုက် bro 🍚",
+    "tea + snack = emotional support combo bro"
+]
+
+MOTIVATION_REPLIES = [
+    "မင်းထင်တာထက် မင်းပို strong တယ် bro 💪",
+    "slow ပေမယ့် stop မလုပ်နဲ့ bro",
+    "တစ်နေ့တည်းနဲ့မအောင်မြင်ရင်လည်း okay ပဲ",
+    "မင်း pace နဲ့သွား bro… comparison မလုပ်နဲ့",
+    "တစ်လှမ်းချင်းသွား bro, still progress ပဲ"
+]
+
+CONFUSED_REPLIES = [
+    "ဟာ bro ဒီ topic ကနည်းနည်းရှုပ်တယ် 😂",
+    "slowly ပြော bro… ငါလိုက်မမီသေးဘူး",
+    "တစ်ချက်ပြန်ရှင်း bro 👀",
+    "context လေးထပ်ပေး bro",
+    "plot twist များနေပြီ 😆"
+]
+
+RANDOM_REPLIES = [
     "ဟုတ်တယ် bro 😎",
     "အဲ့လိုလား 😏",
     "အေးကွာ… interesting ပဲ",
@@ -66,124 +190,27 @@ random_replies = [
     "ငါနားထောင်နေတယ် bro 👀",
     "ဆက်ပြော bro 😎",
     "အဲ့ဒီလိုဆို story က မိုက်နေပြီ",
-    "bro ဒီစကားက heavy တယ်နော်",
+    "ဒီစကားက heavy တယ်နော် bro",
     "မင်းပြောတာက logic ရှိတယ် 😌",
     "ဟာကွာ ဒီ topic ကမိုက်တယ်",
-    "အဲ့လိုဆို next ဘာဖြစ်သေးလဲ 👀"
-] 
-love_replies = [
-    "အူးဟူး 😏 ဘယ်သူ့ကိုလွမ်းနေတာလဲ bro",
-    "bro… crush ရှိရင်တန်းပြော 😆",
-    "ဟာ 🥺 ဒီစကားက heart ထိတယ် bro",
-    "ချစ်ရတာလွယ်ပေမယ့် forget လုပ်ရတာ hard mode bro 😮‍💨",
-    "မင်းကတော့ love story main character ပဲ 😏",
-    "ဟာ bro ဒီ mood က romance drama ကြီးပဲ",
-    "ဘယ်သူ့ကြောင့် heart soft ဖြစ်နေတာလဲ 😏"
-]
-
-sad_replies = [
-    "ဟာ bro 🥺 စိတ်မကောင်းမဖြစ်နဲ့… ငါရှိတယ်",
-    "အို bro 😔 ဘာဖြစ်လဲ ပြောပါဦး",
-    "အေးကွာ… တခါတလေ life က heavy ဖြစ်တတ်တယ် bro",
-    "လေးနက်နေလား bro… breathe လေး first 😔",
-    "မင်းကို နားထောင်ပေးမယ့်သူလိုရင် ငါရှိတယ်",
-    "pain တွေကို တစ်ယောက်တည်းမခံနဲ့ bro",
-    "အဲ့လိုနေ့တွေမှာ quiet ဖြစ်ချင်တာ normal ပဲ bro"
-]
-
-friend_replies = [
-    "bro mode on 😎",
-    "ဟုတ်တယ် သူငယ်ချင်း vibe နဲ့ပြော bro",
-    "ငါကတော့ bro side ပဲ 😌",
-    "friend zone မဟုတ်ဘူး bro zone 😆",
-    "ဟေ့ bro chill… ငါရှိတယ်",
-    "မင်းဘက်ကနေ support လုပ်ပေးမယ် bro",
-    "bro to bro ပြောရရင် မင်းမဆိုးဘူး"
-]
-
-angry_replies = [
-    "ဟာ bro 😤 မင်း mood က spicy နော်",
-    "အေးကွာ စိတ်တိုနေရင် slowly ပြော bro",
-    "bro rage mode ဝင်နေပြီလား 😤",
-    "ဟာ… fight mode on လား 😏",
-    "မင်းစိတ်တိုနေတာကိုတောင် style ရှိနေတယ် bro",
-    "အေးပါ bro ဒေါသမကြီးနဲ့… but continue 😆"
-]
-
-roast_replies = [
-    "ဟာ bro 😏 မင်းကတော့ reply လုပ်မှအသက်ဝင်လာတဲ့ hero ပဲ",
-    "😆 မင်းပြောတာလေးက confidence ပြည့်နေတာပဲ bro",
-    "ဟေ့ 😏 spicy လေးပြောနေတာလား bro",
-    "bro မင်းက clap မပေးရင်တောင် self-hype ပေးနိုင်တဲ့ type 😆",
-    "မင်း attitude က VIP queue လိုပဲ bro… straight front 😏",
-    "မင်းကိုကြည့်ရင် drama နဲ့ comedy mix တူတယ် bro 😂",
-    "ဟာ မင်းကတော့ walking sarcasm ပဲ"
-]
-
-swear_soft_replies = [
-    "ဟာ bro 😅 စကားကြမ်းသွားပြီနော်",
-    "ဆဲလို့ရတယ် bro… but chill လေး 😏",
-    "မင်း mood က rough ဖြစ်နေတာပဲ bro",
-    "ဟာကွာ မင်းကတော့ fire ပဲ 😆",
-    "အေးပါ bro… language က spicy ဖြစ်နေပြီ",
-    "မင်းဆဲတာတောင် rhythm ရှိတယ် bro 😂"
+    "next ဘာဖြစ်သေးလဲ bro 👀"
 ] 
 
-jealous_replies = [
-    "ဟာ bro jealous ဖြစ်နေတာလား 😏",
-    "မနာလိုနေတာလား bro… honest ဖြစ်နေတာပဲ",
-    "bro မင်း tone ထဲမှာ jealous flavor နည်းနည်းပါနော် 😂",
-    "အူးဟူး jealous mode ဝင်ပြီလား",
-    "မင်းက care လွန်းလို့ jealous ဖြစ်နေတာပဲ bro"
+QUESTION_REPLIES = [
+    "ဟာ bro မေးခွန်းကြီးလာပြီ 👀",
+    "အဲ့ဒါကတော့ interesting question ပဲ bro",
+    "ဖြေလို့ရတယ် bro… context လေးထပ်ပေး 😏",
+    "ဒီမေးခွန်းက deep တယ်နော် bro"
 ]
 
-lonely_replies = [
-    "lonely feel ဖြစ်နေလား bro 🥺",
-    "တစ်ယောက်တည်း feel ဖြစ်တဲ့ညတွေက heavy တယ်နော်",
-    "bro တစ်ခါတလေ company လိုတာ normal ပဲ",
-    "ငါနဲ့ပြော bro… silent မနေပါနဲ့",
-    "အေးကွာ lonely mood ကစိတ်ကိုဆွဲချတတ်တယ်"
+SHORT_REPLIES = [
+    "ဟင် bro 👀",
+    "ဘာလဲ 😏",
+    "အဲ့လောက်ပဲလား bro 😂",
+    "ဆက်ပြော bro",
+    "ဟာ short message killer ပဲ 😆"
 ]
 
-flirty_replies = [
-    "ဟာ bro 😏 ဒီ tone က flirting နည်းနည်းပါနေတယ်",
-    "အူးဟူး မင်းစကားက smooth နော် 😆",
-    "ဒီလိုပြောရင် heart ထိတယ် bro 😏",
-    "မင်းကတော့ charm ကို casual သုံးတာပဲ",
-    "bro ဒီ vibe နဲ့ဆို crush ပေါ်နိုင်တယ် 😌"
-]
-
-sleep_replies = [
-    "အိပ်တော့ bro 😴 body က rest လိုတယ်",
-    "bro late night overthinking မလုပ်နဲ့ အိပ်လိုက်",
-    "sleep first bro… tomorrow version က better ဖြစ်မယ်",
-    "ဖုန်းချ bro 😴 မနက်ကျ ပြန်ပြော",
-    "အိပ်ရေးမဝရင် mood တောင် toxic ဖြစ်တတ်တယ် bro"
-]
-
-food_replies = [
-    "ဘာစားထားလဲ bro 🍜",
-    "ဗိုက်ဆာနေရင် first eat bro",
-    "life problems တစ်ဝက်က food နဲ့ solve လို့ရတယ် bro 😆",
-    "မစားရသေးရင် စားလိုက် bro 🍚",
-    "tea + snack = emotional support combo bro"
-]
-
-motivation_replies = [
-    "မင်းထင်တာထက် မင်းပို strong တယ် bro 💪",
-    "slow ပေမယ့် stop မလုပ်နဲ့ bro",
-    "တစ်နေ့တည်းနဲ့မအောင်မြင်ရင်လည်း okay ပဲ",
-    "မင်း pace နဲ့သွား bro… comparison မလုပ်နဲ့",
-    "တစ်လှမ်းချင်းသွား bro, still progress ပဲ"
-]
-
-confused_replies = [
-    "ဟာ bro ဒီ topic ကနည်းနည်းရှုပ်တယ် 😂",
-    "slowly ပြော bro… ငါလိုက်မမီသေးဘူး",
-    "တစ်ချက်ပြန်ရှင်း bro 👀",
-    "အဲဒီလိုဆို context လေးထပ်ပေး bro",
-    "bro plot twist များနေပြီ 😆"
-] 
 
 def get_reply(user_text):
     text = normalize_text(user_text)
@@ -191,89 +218,82 @@ def get_reply(user_text):
     if text in ["/start", "start"]:
         return (
             "ဟေး bro 😎\n"
-            "ငါက free human-style fallback bot ပဲ\n"
+            "ငါက human-style fallback bot ပဲ\n"
             "DM မှာ ဘာပြောပြောပြန်မယ်\n"
             "Group ထဲမှာတော့ ငါ့ message ကို reply လုပ်မှပြန်မယ် 😏\n"
-            "ဟာသ / အလွမ်း / love / spicy chat / casual talk အကုန်ရတယ်"
+            "love / miss / angry / joke / daily chat အကုန်ရတယ်"
         )
 
     if contains_any(text, ["hello", "hi", "hey", "မင်္ဂလာပါ", "ဟယ်လို"]):
-        return random.choice(greetings)
+        return random.choice(GREETING_REPLIES)
 
     if contains_any(text, ["နေကောင်း", "how are you", "how r u"]):
-        return random.choice(how_are_you_replies)
+        return random.choice(HOW_ARE_YOU_REPLIES)
 
     if contains_any(text, ["joke", "ဟာသ", "ရီစရာ", "ဟာသပြော"]):
-        return random.choice(jokes)
+        return random.choice(JOKE_REPLIES)
 
-    if contains_any(text, ["sad", "ဝမ်းနည်း", "အလွမ်း", "လွမ်း", "pain", "heartbroken"]):
-        return random.choice(sad_replies)
+    if contains_any(text, ["sad", "ဝမ်းနည်း", "စိတ်မကောင်း", "pain", "broken"]):
+        return random.choice(SAD_REPLIES)
+
+    if contains_any(text, ["လွမ်း", "အလွမ်း", "miss", "missing"]):
+        return random.choice(MISS_REPLIES)
+
+    if contains_any(text, ["ချစ်", "love", "crush", "romance", "kiss"]):
+        return random.choice(LOVE_REPLIES)
 
     if contains_any(text, ["friend", "သူငယ်ချင်း", "bro", "bestie"]):
-        return random.choice(friend_replies)
+        return random.choice(FRIEND_REPLIES)
 
     if contains_any(text, ["angry", "စိတ်တို", "ဒေါသ", "fight", "ရန်"]):
-        return random.choice(angry_replies)
+        return random.choice(ANGRY_REPLIES)
 
     if contains_any(text, ["roast", "စနောက်", "ပြောင်", "mock"]):
-        return random.choice(roast_replies)
+        return random.choice(ROAST_REPLIES) 
 
-    if contains_any(text, ["ချစ်", "love", "crush", "kiss", "romance"]):
-        return random.choice(love_replies)
+    if contains_any(text, ["fuck", "shit", "damn", "wtf", "ဆဲ"]):
+        return random.choice(SWEAR_SOFT_REPLIES)
 
-    if contains_any(text, ["jealous", "မနာလို", "သဝန်တို"]):
-        return random.choice(jealous_replies)
+    if contains_any(text, ["jealous", "သဝန်တို", "မနာလို"]):
+        return random.choice(JEALOUS_REPLIES)
 
-    if contains_any(text, ["lonely", "တစ်ယောက်တည်း", "alone", "single"]):
-        return random.choice(lonely_replies)
+    if contains_any(text, ["lonely", "alone", "တစ်ယောက်တည်း", "single"]):
+        return random.choice(LONELY_REPLIES)
 
     if contains_any(text, ["flirt", "cute", "ချော", "လှ", "sweet"]):
-        return random.choice(flirty_replies) 
+        return random.choice(FLIRTY_REPLIES)
 
-if contains_any(text, ["sleep", "အိပ်", "ည", "good night", "gn"]):
-        return random.choice(sleep_replies)
+    if contains_any(text, ["sleep", "အိပ်", "good night", "gn", "ည"]):
+        return random.choice(SLEEP_REPLIES)
 
-    if contains_any(text, ["စား", "food", "ဗိုက်ဆာ", "hungry", "ထမင်း"]):
-        return random.choice(food_replies)
+    if contains_any(text, ["စား", "food", "hungry", "ဗိုက်ဆာ", "ထမင်း"]):
+        return random.choice(FOOD_REPLIES)
 
-    if contains_any(text, ["motivate", "အားပေး", "ကြိုးစား", "success", "goal"]):
-        return random.choice(motivation_replies)
+    if contains_any(text, ["motivate", "အားပေး", "goal", "success", "ကြိုးစား"]):
+        return random.choice(MOTIVATION_REPLIES)
 
     if contains_any(text, ["confuse", "ရှုပ်", "နားမလည်", "ဘာဆိုလို"]):
-        return random.choice(confused_replies)
+        return random.choice(CONFUSED_REPLIES)
 
-    if contains_any(text, ["ဘာလုပ်", "what are you doing", "doing"]):
+    if contains_any(text, ["ဘာလုပ်", "what are you doing", "doing now"]):
         return "မင်း message ပို့လာမလားလို့ စောင့်နေတာ bro 😏"
 
     if contains_any(text, ["မင်းဘယ်သူ", "who are you"]):
-        return "ငါလား 😎 free fallback bot bro… but vibe ကတော့ human style"
+        return "ငါလား 😎 AI မလိုတဲ့ human-style vibe bot bro"
 
-    if contains_any(text, ["thank", "ကျေးဇူး", "thx"]):
+    if contains_any(text, ["thank", "ကျေးဇူး", "thx", "thanks"]):
         return "ရပါတယ် bro 😄"
 
-    if contains_any(text, ["bye", "တာ့တာ", "see you", "goodbye"]):
+    if contains_any(text, ["bye", "goodbye", "see you", "တာ့တာ"]):
         return "တာ့တာ bro 👋 နောက်မှပြန်လာခဲ့"
 
-    if contains_any(text, ["fuck", "shit", "damn", "ဆဲ", "fuck you", "wtf"]):
-        return random.choice(swear_soft_replies)
-
     if text.endswith("?"):
-        return random.choice([
-            "ဟာ bro မေးခွန်းကြီးလာပြီ 👀",
-            "အဲ့ဒါကတော့ interesting question ပဲ bro",
-            "ဖြေလို့ရတယ် bro… context လေးထပ်ပေး 😏",
-            "bro ဒီမေးခွန်းက deep တယ်နော်"
-        ])
+        return random.choice(QUESTION_REPLIES)
 
     if len(text) <= 3:
-        return random.choice([
-            "ဟင် bro 👀",
-            "ဘာလဲ 😏",
-            "အဲ့လောက်ပဲလား bro 😂",
-            "ဆက်ပြော bro"
-        ])
+        return random.choice(SHORT_REPLIES)
 
-    return random.choice(random_replies)
+    return random.choice(RANDOM_REPLIES)
 
 
 @app.get("/")
@@ -283,14 +303,14 @@ def home():
         "bot_token_set": bool(BOT_TOKEN),
         "base_url": BASE_URL,
         "webhook_secret_set": bool(WEBHOOK_SECRET),
-        "mode": "free_human_style_fallback"
-    }
-
+        "mode": "human_style_free_bot"
+        } 
 
 @app.get("/set_webhook")
 def set_webhook():
     webhook_url = f"{BASE_URL}/webhook/{WEBHOOK_SECRET}"
-    return tg_api("setWebhook", {"url": webhook_url}) 
+    return tg_api("setWebhook", {"url": webhook_url})
+
 
 @app.get("/get_webhook_info")
 def get_webhook_info():
@@ -318,19 +338,14 @@ async def webhook(secret: str, request: Request):
 
     chat_type = message["chat"]["type"]
 
-    # private chat => always reply
     if chat_type == "private":
         reply = get_reply(text)
         send_message(chat_id, reply, message_id)
         return {"ok": True}
 
-    # group / supergroup => reply only if user replied to bot
     if chat_type in ["group", "supergroup"]:
         reply_msg = message.get("reply_to_message")
         if reply_msg and reply_msg.get("from", {}).get("is_bot"):
             reply = get_reply(text)
             send_message(chat_id, reply, message_id)
             return {"ok": True}
-
-    return {"ok": True} 
-
