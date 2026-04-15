@@ -5,19 +5,19 @@ from openai import OpenAI
 
 app = FastAPI()
 
-@app.get("/")
-def home():
-    return {
-        "ok": True,
-        "openai_key_set": bool(OPENAI_API_KEY)
-    } 
-    
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 BASE_URL = os.getenv("BASE_URL", "")
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+@app.get("/")
+def home():
+    return {
+        "ok": True,
+        "openai_key_set": bool(OPENAI_API_KEY)
+    } 
 
 def tg_api(method, data):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
