@@ -93,13 +93,13 @@ async def webhook(secret: str, request: Request):
 
     chat_type = message["chat"]["type"]
 
-    if chat_type in ["group", "supergroup"]:
-        reply_msg = message.get("reply_to_message")
-    if reply_msg and reply_msg.get("from", {}).get("is_bot"):
+    # private chat => always reply
+    if chat_type == "private":
         reply = ai_reply(text)
         send_message(chat_id, reply, message_id)
         return {"ok": True}
 
+    # group / supergroup => reply only if user replied to bot
     if chat_type in ["group", "supergroup"]:
         reply_msg = message.get("reply_to_message")
         if reply_msg and reply_msg.get("from", {}).get("is_bot"):
