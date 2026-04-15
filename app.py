@@ -81,3 +81,19 @@ async def webhook(secret: str, request: Request):
             send_message(chat_id, f"ok reply: {text}", message_id)
 
     return {"ok": True}
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def ai_reply(user_text):
+    try:
+        res = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a funny Myanmar chatbot. Mix Burmese and English. Be playful, emotional, sometimes teasing."},
+                {"role": "user", "content": user_text}
+            ]
+        )
+        return res.choices[0].message.content
+    except:
+        return "😆 စကားမပြောနိုင်ဘူး bro"
